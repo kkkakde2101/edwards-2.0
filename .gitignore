@@ -1,0 +1,25 @@
+# .NET
+**/bin/
+**/obj/
+**/publish/
+**/*.user
+appsettings.Production.json
+appsettings.Local.json
+
+# Angular / Node
+**/node_modules/
+**/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.suo
+
+# Runtime data (documents, mail, uploads)
+**/App_Data/documents/
+**/App_Data/mail/
+**/App_Data/uploads/

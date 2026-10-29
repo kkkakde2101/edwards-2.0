@@ -1,0 +1,47 @@
+<div class="login-page">
+  <div class="outer">
+    <div class="box">
+      <form class="form-side" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <img class="logo" src="img/edwards-logo.png" alt="Edwards">
+
+        @if (expired && !error()) {
+          <p class="notice">Your session ended. Sign in again to continue.</p>
+        }
+
+        <div class="field">
+          <label for="loginName">Login name</label>
+          <div class="input-line" [class.invalid]="submitted() && form.controls.loginName.invalid">
+            <input id="loginName" type="text" formControlName="loginName" autocomplete="username" autofocus>
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+          </div>
+          @if (submitted() && form.controls.loginName.invalid) {
+            <span class="field-error">Enter your login name.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-line" [class.invalid]="submitted() && form.controls.password.invalid">
+            <input id="password" type="password" formControlName="password" autocomplete="current-password">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+          </div>
+          @if (submitted() && form.controls.password.invalid) {
+            <span class="field-error">Enter your password.</span>
+          }
+        </div>
+
+        @if (error()) {
+          <p class="field-error login-error" role="alert">{{ error() }}</p>
+        }
+
+        <div class="buttons">
+          <a class="link-btn" routerLink="/forgot-password">Forgot password?</a>
+          <button type="submit" class="btn btn-primary" [disabled]="busy()">
+            @if (busy()) { <i class="fa-solid fa-spinner fa-spin"></i> Signing in } @else { Sign In }
+          </button>
+        </div>
+      </form>
+      <div class="picture-side" aria-hidden="true"></div>
+    </div>
+  </div>
+</div>

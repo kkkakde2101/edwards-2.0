@@ -1,0 +1,149 @@
+<div class="page-header">
+  <div>
+    <h1>{{ isEdit() ? 'Edit customer' : 'Create customer' }}</h1>
+    <div class="breadcrumb">
+      <a routerLink="/">Home</a><span>/</span><a routerLink="/customers">Customers</a><span>/</span>
+      @if (loaded(); as c) { <a [routerLink]="['/customers', c.id]">{{ c.name }}</a><span>/</span><span>Edit</span> }
+      @else { <span>New</span> }
+    </div>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading the customer…</div>
+} @else {
+  <form class="panel" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="panel-heading"><h3>Customer details</h3></div>
+    <div class="panel-body">
+      @if (error()) {
+        <div class="alert alert-error" role="alert"><i class="fa-solid fa-circle-exclamation"></i>{{ error() }}</div>
+      }
+      @if (isEdit() && !loaded()?.city) {
+        <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i>
+          <span>This customer came from today's system, which had no city field. Add the city to save your changes.</span>
+        </div>
+      }
+
+      <div class="form-grid">
+        <div class="field wide">
+          <label for="name">Customer name<span class="req">*</span></label>
+          <input id="name" class="input" formControlName="name" maxlength="200" [class.invalid]="err('name')">
+          @if (err('name'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+        <div class="field">
+          <label for="customerDate">Date<span class="req">*</span></label>
+          <input id="customerDate" class="input" type="date" formControlName="customerDate" [class.invalid]="err('customerDate')">
+          @if (err('customerDate'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+
+        <div class="field full">
+          <label for="address">Address<span class="req">*</span></label>
+          <textarea id="address" class="input" rows="2" formControlName="address" maxlength="300" [class.invalid]="err('address')"></textarea>
+          @if (err('address'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+
+        <div class="field">
+          <label for="city">City<span class="req">*</span></label>
+          <input id="city" class="input" formControlName="city" maxlength="100" [class.invalid]="err('city')">
+          @if (err('city'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+        <div class="field">
+          <label for="district">District<span class="req">*</span></label>
+          <input id="district" class="input" formControlName="district" maxlength="100" [class.invalid]="err('district')">
+          @if (err('district'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+        <div class="field">
+          <label for="stateId">State<span class="req">*</span></label>
+          <select id="stateId" class="input" formControlName="stateId" [class.invalid]="err('stateId')">
+            <option [ngValue]="null">Choose a state</option>
+            @for (s of stateOptions(); track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
+          </select>
+          @if (err('stateId'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+
+        <div class="field">
+          <label for="pinCode">Pincode<span class="req">*</span></label>
+          <input id="pinCode" class="input" formControlName="pinCode" inputmode="numeric" maxlength="6" [class.invalid]="err('pinCode')">
+          @if (err('pinCode'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+        <div class="field">
+          <label for="gst">GST number</label>
+          <input id="gst" class="input" formControlName="gst" maxlength="15" placeholder="27AAAAA0000A1Z5" [class.invalid]="err('gst')">
+          @if (err('gst'); as m) { <span class="field-error">{{ m }}</span> } @else { <span class="hint">Optional. 15 characters.</span> }
+        </div>
+        <div class="field">
+          <label for="businessLineId">Business line</label>
+          <select id="businessLineId" class="input" formControlName="businessLineId" [class.invalid]="err('businessLineId')">
+            <option [ngValue]="null">Not set</option>
+            @for (b of businessLineOptions(); track b.id) { <option [ngValue]="b.id">{{ b.name }}</option> }
+          </select>
+          @if (err('businessLineId'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+
+        <div class="field">
+          <label for="segmentId">Segment or industry<span class="req">*</span></label>
+          <select id="segmentId" class="input" formControlName="segmentId" [class.invalid]="err('segmentId')">
+            <option [ngValue]="null">Choose a segment</option>
+            @for (s of segmentOptions(); track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
+          </select>
+          @if (err('segmentId'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+        <div class="field">
+          <label for="accountTypeId">Account type<span class="req">*</span></label>
+          <select id="accountTypeId" class="input" formControlName="accountTypeId" [class.invalid]="err('accountTypeId')">
+            <option [ngValue]="null">Choose an account type</option>
+            @for (a of accountTypeOptions(); track a.id) { <option [ngValue]="a.id">{{ a.name }}</option> }
+          </select>
+          @if (err('accountTypeId'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+        <div class="field">
+          <label for="dealerId">Dealer<span class="req">*</span></label>
+          <select id="dealerId" class="input" formControlName="dealerId" [class.invalid]="err('dealerId')">
+            <option [ngValue]="null">Choose a dealer</option>
+            @for (d of dealerOptions(); track d.id) { <option [ngValue]="d.id">{{ d.zone ? d.name + ' (' + d.zone + ')' : d.name }}</option> }
+          </select>
+          @if (isEdit()) { <span class="hint">To move the customer to another dealer, <a routerLink="/transfers">request a customer transfer</a>.</span> }
+          @if (err('dealerId'); as m) { <span class="field-error">{{ m }}</span> }
+        </div>
+
+        <div class="field">
+          <label for="dealerUserId">Dealer engineer<span class="req">*</span></label>
+          <select id="dealerUserId" class="input" formControlName="dealerUserId" [class.invalid]="err('dealerUserId')">
+            <option [ngValue]="null">{{ form.controls.dealerId.value === null ? 'Choose a dealer first' : 'Choose an engineer' }}</option>
+            @for (e of engineers(); track e.id) { <option [ngValue]="e.id">{{ e.name }}</option> }
+          </select>
+          @if (err('dealerUserId'); as m) { <span class="field-error">{{ m }}</span> }
+          @else if (ownScope()) { <span class="hint">Customers you add are assigned to you.</span> }
+        </div>
+      </div>
+    </div>
+    <div class="panel-footer">
+      <a class="btn btn-dark" [routerLink]="isEdit() ? ['/customers', id()] : ['/customers']">Cancel</a>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) { <i class="fa-solid fa-spinner fa-spin"></i> Saving } @else { {{ isEdit() ? 'Save changes' : 'Create customer' }} }
+      </button>
+    </div>
+  </form>
+}
+
+@if (duplicates(); as dup) {
+  <app-modal title="This customer may already exist" (closed)="duplicates.set(null)">
+    <div class="panel-body">
+      <p>{{ dup.message }} Check these before saving, so the same company is not added twice.</p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Customer</th><th>GST number</th><th>City</th><th>Dealer</th></tr></thead>
+          <tbody>
+            @for (m of dup.matches; track m.id) {
+              <tr><td>{{ m.name }}</td><td>{{ m.gst || '—' }}</td><td>{{ m.city || '—' }}</td><td>{{ m.dealer }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel-footer">
+      <button type="button" class="btn btn-light" (click)="duplicates.set(null)">Go back and change</button>
+      <button type="button" class="btn btn-primary" (click)="saveAnyway()">Save anyway</button>
+    </div>
+  </app-modal>
+}

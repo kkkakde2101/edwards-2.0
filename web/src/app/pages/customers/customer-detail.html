@@ -1,0 +1,148 @@
+@if (error()) {
+  <div class="page-header"><h1>Customer</h1></div>
+  <div class="alert alert-error" role="alert"><i class="fa-solid fa-circle-exclamation"></i>{{ error() }}</div>
+  <a class="btn btn-dark" routerLink="/customers">Back to customers</a>
+} @else if (customer(); as c) {
+  <div class="page-header">
+    <div>
+      <h1>{{ c.name }} <span class="pill" [class.pill-active]="c.isActive" [class.pill-inactive]="!c.isActive">{{ c.isActive ? 'Active' : 'Inactive' }}</span></h1>
+      <div class="breadcrumb"><a routerLink="/">Home</a><span>/</span><a routerLink="/customers">Customers</a><span>/</span><span>{{ c.name }}</span></div>
+    </div>
+    <div class="actions">
+      <a class="btn btn-dark" routerLink="/customers"><i class="fa-solid fa-arrow-left"></i> Back</a>
+      @if (c.isActive) {
+        <a *appCan="P.customersEdit" class="btn btn-primary" [routerLink]="['/customers', c.id, 'edit']"><i class="fa-solid fa-pen"></i> Edit</a>
+        <button *appCan="P.customersDeactivate" type="button" class="btn btn-light" (click)="confirmStatus.set(true)">Deactivate</button>
+      } @else {
+        <button *appCan="P.customersDeactivate" type="button" class="btn btn-light" (click)="setActive(true)" [disabled]="busy()">Reactivate</button>
+      }
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading"><h3>Customer details</h3></div>
+    <div class="panel-body">
+      <dl class="details">
+        <div><dt>Date</dt><dd>{{ date(c.customerDate) }}</dd></div>
+        <div><dt>Business line</dt><dd>{{ c.businessLine || '—' }}</dd></div>
+        <div><dt>Segment or industry</dt><dd>{{ c.segment }}</dd></div>
+        <div><dt>Account type</dt><dd>{{ c.accountType }}</dd></div>
+        <div class="wide"><dt>Address</dt><dd>{{ c.address || '—' }}</dd></div>
+        <div><dt>City</dt><dd>@if (c.city) { {{ c.city }} } @else { <span class="pill pill-warn">Not set</span> }</dd></div>
+        <div><dt>District</dt><dd>{{ c.district || '—' }}</dd></div>
+        <div><dt>State</dt><dd>{{ c.state || '—' }}</dd></div>
+        <div><dt>Pincode</dt><dd>{{ c.pinCode }}</dd></div>
+        <div><dt>GST number</dt><dd>{{ c.gst || '—' }}</dd></div>
+        <div><dt>Dealer</dt><dd>{{ c.dealer }}</dd></div>
+        <div><dt>Dealer engineer</dt><dd>{{ c.dealerUser || '—' }}</dd></div>
+        <div><dt>Last changed</dt><dd>{{ date(c.updatedAt || c.createdAt) }}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>Contacts <span class="count">{{ contacts().length }}</span></h3>
+      @if (c.isActive) {
+        <button *appCan="P.customersEdit" type="button" class="btn btn-primary btn-sm" (click)="openContact('new')"><i class="fa-solid fa-plus"></i> Add contact</button>
+      }
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Name</th><th>Designation</th><th>Email</th><th>Mobile</th><th>Landline</th><th>Department</th><th>Reports to</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr>
+        </thead>
+        <tbody>
+          @for (p of contacts(); track p.id) {
+            <tr>
+              <td>{{ p.personName }}</td>
+              <td>{{ p.designation || '—' }}</td>
+              <td><a [href]="'mailto:' + p.email">{{ p.email }}</a></td>
+              <td class="nowrap">{{ p.mobile }}</td>
+              <td class="nowrap">{{ p.landLine || '—' }}</td>
+              <td>{{ p.department || '—' }}</td>
+              <td>{{ p.reportingTo || '—' }}</td>
+              <td><span class="pill" [class.pill-active]="p.isActive" [class.pill-inactive]="!p.isActive">{{ p.isActive ? 'Active' : 'Inactive' }}</span></td>
+              <td class="row-actions">
+                <ng-container *appCan="P.customersEdit">
+                  <button type="button" class="icon-btn" (click)="openContact(p)" [attr.aria-label]="'Edit ' + p.personName" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                  @if (p.isActive) {
+                    <button type="button" class="icon-btn" (click)="setContactActive(p, false)" [attr.aria-label]="'Deactivate ' + p.personName" title="Deactivate"><i class="fa-solid fa-ban"></i></button>
+                  } @else {
+                    <button type="button" class="icon-btn" (click)="setContactActive(p, true)" [attr.aria-label]="'Reactivate ' + p.personName" title="Reactivate"><i class="fa-solid fa-rotate-left"></i></button>
+                  }
+                </ng-container>
+              </td>
+            </tr>
+          } @empty {
+            <tr class="empty"><td colspan="9">No contacts yet.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <app-customer-related [customerId]="c.id" />
+
+  @if (confirmStatus()) {
+    <app-modal title="Deactivate this customer?" (closed)="confirmStatus.set(false)">
+      <div class="panel-body">
+        <p>{{ c.name }} will be hidden from lists and dropdowns. Its history stays, and it can be reactivated at any time.</p>
+      </div>
+      <div class="panel-footer">
+        <button type="button" class="btn btn-light" (click)="confirmStatus.set(false)">Keep active</button>
+        <button type="button" class="btn btn-primary" (click)="setActive(false)" [disabled]="busy()">Deactivate</button>
+      </div>
+    </app-modal>
+  }
+
+  @if (editing(); as e) {
+    <app-modal [title]="e === 'new' ? 'Add contact' : 'Edit contact'" (closed)="editing.set(null)">
+      <form [formGroup]="contactForm" (ngSubmit)="saveContact()" novalidate>
+        <div class="panel-body">
+          @if (contactError()) { <div class="alert alert-error" role="alert"><i class="fa-solid fa-circle-exclamation"></i>{{ contactError() }}</div> }
+          <div class="form-grid two">
+            <div class="field">
+              <label for="personName">Name<span class="req">*</span></label>
+              <input id="personName" class="input" formControlName="personName" [class.invalid]="contactErr('personName')">
+              @if (contactErr('personName'); as m) { <span class="field-error">{{ m }}</span> }
+            </div>
+            <div class="field">
+              <label for="designation">Designation</label>
+              <input id="designation" class="input" formControlName="designation">
+            </div>
+            <div class="field">
+              <label for="email">Email<span class="req">*</span></label>
+              <input id="email" class="input" type="email" formControlName="email" [class.invalid]="contactErr('email')">
+              @if (contactErr('email'); as m) { <span class="field-error">{{ m }}</span> }
+            </div>
+            <div class="field">
+              <label for="mobile">Mobile<span class="req">*</span></label>
+              <input id="mobile" class="input" type="tel" formControlName="mobile" [class.invalid]="contactErr('mobile')">
+              @if (contactErr('mobile'); as m) { <span class="field-error">{{ m }}</span> }
+            </div>
+            <div class="field">
+              <label for="landLine">Landline</label>
+              <input id="landLine" class="input" type="tel" formControlName="landLine" [class.invalid]="contactErr('landLine')">
+              @if (contactErr('landLine'); as m) { <span class="field-error">{{ m }}</span> }
+            </div>
+            <div class="field">
+              <label for="department">Department</label>
+              <input id="department" class="input" formControlName="department">
+            </div>
+            <div class="field">
+              <label for="reportingTo">Reports to</label>
+              <input id="reportingTo" class="input" formControlName="reportingTo">
+            </div>
+          </div>
+        </div>
+        <div class="panel-footer">
+          <button type="button" class="btn btn-light" (click)="editing.set(null)">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="busy()">{{ e === 'new' ? 'Add contact' : 'Save contact' }}</button>
+        </div>
+      </form>
+    </app-modal>
+  }
+} @else {
+  <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading the customer…</div>
+}

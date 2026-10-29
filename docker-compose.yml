@@ -1,0 +1,28 @@
+# Edwards 2.0: API + web. The database is the SQL Server you already run (see .env.example).
+# Start:  docker compose --env-file .env up --build   then open http://localhost:8080
+services:
+  api:
+    build: ./api
+    environment:
+      ConnectionStrings__Default: ${EDWARDS_DB:?Set EDWARDS_DB in .env}
+      Jwt__Key: ${EDWARDS_JWT_KEY:?Set EDWARDS_JWT_KEY in .env}
+      Database__MigrateOnStartup: "true"
+      Proxy__TrustForwardedHeaders: "true"
+      TZ: Asia/Kolkata
+    volumes:
+      # Uploaded documents and, until SMTP is configured, the emails written to disk.
+      - edwards-data:/app/App_Data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  edwards-data:

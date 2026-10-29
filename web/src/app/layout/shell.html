@@ -1,0 +1,114 @@
+<div class="shell" [class.sidebar-open]="sidebarOpen()">
+  <header class="topbar">
+    <a class="brand" routerLink="/" aria-label="Edwards home">
+      <img src="img/edwards-logo.png" alt="Edwards">
+    </a>
+    <div class="bar">
+      <button type="button" class="bar-btn" (click)="sidebarOpen.set(!sidebarOpen())" aria-label="Show or hide the menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="spacer"></div>
+      @if (me()) {
+        <div class="bell">
+          <button type="button" class="bar-btn" (click)="toggleBell()" [attr.aria-expanded]="bellOpen()"
+                  [attr.aria-label]="'Notifications, ' + notes.unread() + ' unread'">
+            <i class="fa-solid fa-bell"></i>
+            @if (notes.unread()) { <span class="badge">{{ notes.unread() > 99 ? '99+' : notes.unread() }}</span> }
+          </button>
+          @if (bellOpen()) {
+            <button type="button" class="click-away" (click)="bellOpen.set(false)" aria-label="Close notifications"></button>
+            <div class="bell-menu" role="menu">
+              <div class="bell-head">
+                <strong>Notifications</strong>
+                @if (notes.unread()) { <button type="button" class="link-btn" (click)="notes.markAllRead()">Mark all read</button> }
+              </div>
+              @for (n of notes.latest(); track n.id) {
+                <button type="button" class="bell-item" [class.unread]="!n.readAt" role="menuitem" (click)="openNote(n)">
+                  <span class="t">{{ n.title }}</span>
+                  <span class="b">{{ n.body }}</span>
+                  <span class="d">{{ dateTime(n.createdAt) }}</span>
+                </button>
+              } @empty {
+                <div class="bell-empty">Nothing new.</div>
+              }
+              <a class="bell-all" routerLink="/notifications" (click)="bellOpen.set(false)">See all notifications</a>
+            </div>
+          }
+        </div>
+      }
+      @if (me(); as me) {
+        <div class="user">
+          <button type="button" class="bar-btn user-btn" (click)="userMenuOpen.set(!userMenuOpen())" [attr.aria-expanded]="userMenuOpen()">
+            <i class="fa-solid fa-circle-user"></i>
+            <span class="user-name">{{ me.displayName }}</span>
+            <i class="fa-solid fa-caret-down caret"></i>
+          </button>
+          @if (userMenuOpen()) {
+            <button type="button" class="click-away" (click)="userMenuOpen.set(false)" aria-label="Close menu"></button>
+            <div class="user-menu" role="menu">
+              <div class="user-card">
+                <strong>{{ me.displayName }}</strong>
+                <span>{{ me.roleName }}@if (me.dealerName) { · {{ me.dealerName }} }</span>
+                <span class="muted">Sees: {{ scopeLabel() }}</span>
+              </div>
+              <a routerLink="/change-password" role="menuitem"><i class="fa-solid fa-key"></i> Change password</a>
+              <button type="button" role="menuitem" (click)="signOut()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
+            </div>
+          }
+        </div>
+      }
+      <img class="bar-logo" src="img/edwards-logo-white.png" alt="">
+    </div>
+  </header>
+
+  <aside class="sidebar" aria-label="Main menu">
+    @if (me(); as me) {
+      <div class="user-panel">
+        <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+        <div class="who">
+          <span class="name">{{ me.displayName }}</span>
+          <span class="role">{{ me.roleName }}</span>
+        </div>
+      </div>
+      <div class="menu-title">Edwards</div>
+      <nav>
+        <ul class="menu">
+          @for (item of me.menu; track item.label) {
+            @if (item.children?.length) {
+              <li class="group" [class.open]="isGroupOpen(item)">
+                <button type="button" class="menu-link" (click)="toggleGroup(item)" [attr.aria-expanded]="isGroupOpen(item)">
+                  <i [class]="item.icon"></i><span>{{ item.label }}</span>
+                  <i class="fa-solid fa-angle-left chevron"></i>
+                </button>
+                @if (isGroupOpen(item)) {
+                  <ul class="submenu">
+                    @for (child of item.children; track child.label) {
+                      <li>
+                        <a class="menu-link" [routerLink]="child.route" routerLinkActive="active">
+                          <i [class]="child.icon"></i><span>{{ child.label }}</span>
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            } @else {
+              <li>
+                <a class="menu-link" [routerLink]="item.route" routerLinkActive="active">
+                  <i [class]="item.icon"></i><span>{{ item.label }}</span>
+                </a>
+              </li>
+            }
+          }
+        </ul>
+      </nav>
+    }
+  </aside>
+  <button type="button" class="scrim" (click)="sidebarOpen.set(false)" aria-label="Close menu"></button>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+
+  <footer class="footer">Copyright © {{ year }} Edwards India Pvt. Ltd. All Rights Reserved.</footer>
+</div>
